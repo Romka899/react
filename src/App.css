@@ -28,6 +28,63 @@
   color: #61dafb;
 }
 
+.app{
+  display: flex;
+  flex-wrap: wrap;
+  align-content: space-between;
+  justify-content: center;
+  width: 100%;
+  margin-bottom: 200px;
+}
+
+.pagination {
+  width: 80vw;
+  position: fixed;
+  display: flex;
+  justify-content: center;
+  margin-top: 10px;
+  bottom: 0;
+  margin-bottom: 20px;
+}
+
+
+.pagination button {
+  margin: 0 5px;
+  padding: 25px 50px;
+  border: 1px solid black;
+  background-color: #fff;
+  cursor: pointer;
+}
+
+.active{
+  color: red;
+}
+
+.pagination button:hover {
+  background-color: #f0f0f0;
+}
+
+.item-container{
+    text-align: center;
+    width: 500px;
+    border: 1px solid gray;
+    border-radius: 50px ;
+    padding: 10x;
+    margin-top: 10px;
+    margin-right: 10px;
+}
+
+.created{
+  /*margin-left: 200px;*/
+  text-align: right;
+  margin-right: 10px;
+}
+
+.item-container.active {
+  border: 2px solid red; 
+  background-color: #f0f0f0; 
+}
+
 @keyframes App-logo-spin {
   from {
     transform: rotate(0deg);
