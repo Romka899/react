@@ -1,71 +1,38 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import axios from 'axios';
+import React, { useState, useEffect} from 'react';
 import moment from 'moment';
 import Modal from './Modal';
 import debounce from 'lodash.debounce';
+import Hooks from './Hooks';
+import Pagination from './Pagination';
 import './App.css';
+
 
 function App() {
   moment.locale('ru');
-  const [filteredShips, setFilteredShips] = useState([]);
-  const [selectedShipIndex, setSelectedShipIndex] = useState(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
 
-  const cache = useRef({
-    pageCache: {}, 
-    shipsCache: {}, 
+  const [selectedShipIndex, setSelectedShipIndex] = useState(null);
+  const [currentPage, setCurrentPage] = useState(() => {
+    const savedPage = localStorage.getItem('currentPage');
+    return savedPage ? parseInt(savedPage, 10) : 1;
+  });
+  const [itemsPerPage, setItemsPerPage] = useState(() => {
+    const savedItems = localStorage.getItem('itemsPerPage');
+    return savedItems ? parseInt(savedItems, 10) : 1;
   });
 
-  const fetchShipsByPage = useCallback(async (pageCache, shipsCache) => {
-    const pageCacheKey = `Page${pageCache}_ship_${shipsCache}`;
-    
-    if (cache.current.pageCache[pageCacheKey]) {
-      setFilteredShips(cache.current.pageCache[pageCacheKey].ships);
-      setTotalPages(cache.current.pageCache[pageCacheKey].totalPages);
-      return;
-    }
-  
-    try {
-      const response = await axios.post('http://localhost:3000/api/getShipsByPage', {
-        currentPage: pageCache,
-        itemsPerPage: shipsCache,
-      });
-  
-      const { ships, totalPages } = response.data;
-  
+  const { filteredShips, totalPages, fetchShipsByPage } = Hooks();
 
-      const shipsWithKeys = ships.map((ship, index) => ({
-        ...ship,
-        key: `${ship.name}_${index}`,
-      }));
-  
-      const newShips = shipsWithKeys.filter(ship => 
-        !cache.current.shipsCache[ship.key]
-      );
-      
-      newShips.forEach(ship => {
-        cache.current.shipsCache[ship.key] = ship;
-      });
-  
-      cache.current.pageCache[pageCacheKey] = { 
-        ships: shipsWithKeys.map(ship => cache.current.shipsCache[ship.key]),
-        totalPages 
-      };
-  
-      setFilteredShips(cache.current.pageCache[pageCacheKey].ships);
-      setTotalPages(totalPages);
-  
-    } catch (error) {
-      console.log(error);
-    }
-  }, []);
+  useEffect(() => {
+    localStorage.setItem('currentPage', currentPage);
+  }, [currentPage]);
 
-  const debouncedFetchShipsByPage = useCallback(
-    debounce((page, perPage) => fetchShipsByPage(page, perPage), 100),
-    [fetchShipsByPage]
-  );
+
+  useEffect(() => {
+    localStorage.setItem('itemsPerPage', itemsPerPage);
+  }, [itemsPerPage]);
+
+
+  const debouncedFetchShipsByPage = debounce(fetchShipsByPage, 100);
 
   useEffect(() => {
     debouncedFetchShipsByPage(currentPage, itemsPerPage);
@@ -107,33 +74,7 @@ function App() {
     }
   };
 
-  const generatePagination = () => {
-    const pages = [];
-    pages.push(1);
 
-    if (currentPage > 4) {
-      pages.push('...');
-    }
-
-    const start = Math.max(2, currentPage - 2);
-    const end = Math.min(totalPages - 1, currentPage + 2);
-
-    for (let i = start; i <= end; i++) {
-      pages.push(i);
-    }
-
-    if (currentPage < totalPages - 3) {
-      pages.push('...');
-    }
-
-    if (totalPages > 1) {
-      pages.push(totalPages);
-    }
-
-    return pages;
-  };
-
-  const pages = generatePagination();
 
   return (
     <div className="app">
@@ -152,27 +93,13 @@ function App() {
         </div>
       ))}
   
-
-      <div className="pagination">
-        {pages.map((page, index) => (
-          <button
-            key={index}
-            onClick={() => handlePageChange(page)}
-            className={currentPage === page ? 'active' : ''}
-            disabled={page === '...'}
-          >
-            {page}
-          </button>
-        ))}
-  
-        <select value={itemsPerPage} onChange={handleItemsPerPageChange}>
-          <option value={1}>1 элемент</option>
-          <option value={6}>6 элементов</option>
-          <option value={12}>12 элементов</option>
-          <option value={17}>17 элементов</option>
-          <option value={18}>18 элементов</option>
-        </select>
-      </div>
+  <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        handlePageChange={handlePageChange}
+        itemsPerPage={itemsPerPage}
+        handleItemsPerPageChange={handleItemsPerPageChange}
+      />
   
       <Modal isOpen={selectedShipIndex !== null} onClose={closeModal}>
         {selectedShipIndex !== null && (
